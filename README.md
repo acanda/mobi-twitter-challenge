@@ -2,12 +2,15 @@
 
 ## Run
 
-Start everything with
-```
-docker-compose up -d
-```
+Start everything with `docker-compose up -d`. You need access to the Mobi Docker
+registry.
 
-Stop everything with
-```
-docker-compose down
-```
+You can follow the logs of individual containers with 
+`docker logs -f dtm-kafka-connect-service`.
+
+The following UIs are available:
+Kafka Topics UI: http://localhost:8000
+Kafka Schema Registry UI: http://localhost:8001
+Kafka Connect UI: http://localhost:8003
+
+Stop everything with `docker-compose down`.
