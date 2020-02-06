@@ -84,20 +84,20 @@ services:
       - dtm-kafka-connect-service-network
 
   kafka-topics-ui:
-      image: landoop/kafka-topics-ui:0.9.4
-      hostname: kafka-topics-ui
-      ports:
-        - "8000:8000"
-      environment:
-        KAFKA_REST_PROXY_URL: "http://kafka-rest-proxy:8082/"
-        PROXY: "true"
-      depends_on:
-        - zoo1
-        - kafka1
-        - kafka-schema-registry
-        - kafka-rest-proxy
-      networks:
-        - dtm-kafka-connect-service-network
+    image: landoop/kafka-topics-ui:0.9.4
+    hostname: kafka-topics-ui
+    ports:
+      - "8000:8000"
+    environment:
+      KAFKA_REST_PROXY_URL: "http://kafka-rest-proxy:8082/"
+      PROXY: "true"
+    depends_on:
+      - zoo1
+      - kafka1
+      - kafka-schema-registry
+      - kafka-rest-proxy
+    networks:
+      - dtm-kafka-connect-service-network
 
   kafka-connect:
     image: docker-registry.mobicorp.ch/mobi/dtm/dtm-kafka-connect-service
@@ -163,7 +163,7 @@ services:
       - dtm-kafka-connect-service-network
 
   graphdb:
-    image: ontotext/graphdb:9.1.1-se
+    build: graphdb
     container_name: graphdb
     ports:
       - "7200:7200"

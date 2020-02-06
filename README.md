@@ -2,8 +2,8 @@
 
 ## Run
 
-Start everything with `docker-compose up -d`. You need access to the Mobi Docker
-registry.
+Start everything with `docker-compose up -d --build`. You need access to the
+Mobi Docker registry.
 
 You can follow the logs of individual containers with 
 `docker logs -f dtm-kafka-connect-service`.
