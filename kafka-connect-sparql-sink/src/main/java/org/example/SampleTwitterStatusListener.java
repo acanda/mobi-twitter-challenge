@@ -2,6 +2,7 @@ package org.example;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
 import java.util.Properties;
 
 import twitter4j.StallWarning;
@@ -18,7 +19,11 @@ public class SampleTwitterStatusListener {
 	public static void main(String[] args) {
 		StatusListener listener = new StatusListener() {
 			public void onStatus(Status status) {
-				System.out.println(status.getUser().getName() + " : " + status.getText());
+				System.out.println("--------------");
+				System.out.println(status.getUser().getName());
+				System.out.println(status.getText());
+				System.out.println(Arrays.toString(status.getHashtagEntities()));
+				System.out.println("--------------");
 			}
 
 			public void onDeletionNotice(StatusDeletionNotice statusDeletionNotice) {
@@ -61,7 +66,7 @@ public class SampleTwitterStatusListener {
 		twitterStream.sample();
 	}
 
-	private static Configuration configuration() {
+	public static Configuration configuration() {
 		Properties properties = new Properties();
 
 		String propertiesFile = "/twitter-auth.properties";
