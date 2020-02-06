@@ -80,7 +80,4 @@ RUN wget --no-check-certificate https://nexus.mobicorp.ch:8443/nexus/repository/
 #Hack ! Skipping the test otherwise it doesn't work, class not found with the config provider :(
 RUN sed -e '/\/etc\/confluent\/docker\/ensure/ s/^#*/#/' -i /etc/confluent/docker/run
 
-# Add jars
-COPY ./dtm-external-connectors/target/dtm-external-connectors-1.0-SNAPSHOT-package/*.jar /usr/share/java/
-
 USER java
