@@ -1,0 +1,4 @@
+# Set the default behavior, in case people do not have core.autocrlf set.
+# Handle line endings automatically for files detected as text and leave all
+# files detected as binary untouched.
+* text=auto
