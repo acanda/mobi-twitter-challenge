@@ -12,5 +12,6 @@ The following UIs are available:
 Kafka Topics UI: http://localhost:8000
 Kafka Schema Registry UI: http://localhost:8001
 Kafka Connect UI: http://localhost:8003
+GraphDB: http://localhost:7200
 
 Stop everything with `docker-compose down`.

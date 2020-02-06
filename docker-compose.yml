@@ -162,6 +162,13 @@ services:
     networks:
       - dtm-kafka-connect-service-network
 
+  graphdb:
+    image: ontotext/graphdb:9.1.1-se
+    container_name: graphdb
+    ports:
+      - "7200:7200"
+    networks:
+      - dtm-kafka-connect-service-network
 
 networks:
   dtm-kafka-connect-service-network:
