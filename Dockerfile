@@ -80,4 +80,6 @@ RUN wget --no-check-certificate https://nexus.mobicorp.ch:8443/nexus/repository/
 #Hack ! Skipping the test otherwise it doesn't work, class not found with the config provider :(
 RUN sed -e '/\/etc\/confluent\/docker\/ensure/ s/^#*/#/' -i /etc/confluent/docker/run
 
+COPY ./kafka-connect-sparql-sink/target/*-fat.jar /usr/share/java/
+
 USER java
