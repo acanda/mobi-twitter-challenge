@@ -2,13 +2,18 @@ package org.example;
 
 import java.util.Arrays;
 
+import org.eclipse.rdf4j.model.Literal;
 import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.model.util.ModelBuilder;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.sparql.SPARQLRepository;
 
+import twitter4j.GeoLocation;
+import twitter4j.HashtagEntity;
 import twitter4j.Status;
 import twitter4j.StatusAdapter;
 import twitter4j.StatusListener;
@@ -53,8 +58,9 @@ public class Twitter2Sparql {
 		};
 	}
 
-	private static Model status2triples(Status status) {
+	public static Model status2triples(Status status) {
 		ModelBuilder modelBuilder = new ModelBuilder();
+		ValueFactory valueFactory = SimpleValueFactory.getInstance();
 
 		modelBuilder.setNamespace(RDF.NS);
 		modelBuilder.setNamespace("ex", "http://example.org/");
@@ -65,17 +71,59 @@ public class Twitter2Sparql {
 		final String userIri = "user:" + status.getUser().getId();
 		final String statusIri = "status:" + status.getId();
 
-		// user info, user#status
+		// user info, user#tweet
 		modelBuilder.subject(userIri)
 				.add("rdf:type", "ex:User")
 				.add("rdfs:label", status.getUser().getName())
 				.add("ex:name", status.getUser().getName())
-				.add("ex:tweet", statusIri);
+				.add("ex:location", status.getUser().getLocation())
+				.add("ex:followersCount", status.getUser().getFollowersCount())
+				.add("ex:tweet", statusIri)
+				;
+		
 
-		// status
+		// tweet.text with language-tag, if available
+		final String lang = status.getLang();
+		final Literal tweetText = lang != null ? valueFactory.createLiteral(status.getText(), lang)
+				: valueFactory.createLiteral(status.getText());
+
+		// tweet		
 		modelBuilder.subject(statusIri)
 				.add("rdf:type", "ex:Tweet")
-				.add("ex:text", status.getText());
+				.add("ex:text", tweetText)
+				.add("ex:createdAt", valueFactory.createLiteral(status.getCreatedAt()))
+				.add("ex:retweetCount", status.getRetweetCount())				
+				;
+				
+		GeoLocation geoLocation = status.getGeoLocation();
+		if (geoLocation != null) {
+			modelBuilder.subject(statusIri)
+			.add("ex:latitude", geoLocation.getLatitude())
+			.add("ex:longitude", geoLocation.getLongitude())
+			;			
+		}
+		
+		String source = status.getSource();
+		if (source != null) {
+			modelBuilder.subject(statusIri)
+			.add("ex:source", source)
+			;			
+		}				
+
+		// hashtags
+		for (HashtagEntity ht : status.getHashtagEntities()) {
+			final String hashtagIri = "hashtag:" + ht.getText();
+
+			modelBuilder.subject(hashtagIri)
+					.add("rdf:type", "ex:Hashtag")
+					.add("ex:text", ht.getText())
+					;
+
+			// tweet#hashtag
+			modelBuilder.subject(statusIri)
+					.add("ex:hashtag", hashtagIri)
+					;
+		}
 
 		Model model = modelBuilder.build();
 		return model;
