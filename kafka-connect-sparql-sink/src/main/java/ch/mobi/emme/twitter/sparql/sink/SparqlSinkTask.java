@@ -2,6 +2,8 @@ package ch.mobi.emme.twitter.sparql.sink;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.kafka.connect.data.Schema;
@@ -19,6 +21,9 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class SparqlSinkTask extends SinkTask {
+
+    private static final String RDF_TYPE = "rdf:type";
+    private static final String RDF_LABEL = "rdf:label";
 
     private RepositoryConnection connection;
     private SPARQLRepository repo;
@@ -63,32 +68,68 @@ public class SparqlSinkTask extends SinkTask {
             return Collections.emptyList();
         }
 
-        final Struct status = (Struct) record.value();
+        final Struct tweet = (Struct) record.value();
 
 
         final ModelBuilder modelBuilder = new ModelBuilder();
 
         modelBuilder.setNamespace(RDF.NS);
-        modelBuilder.setNamespace("ex", "http://example.org/");
-        modelBuilder.setNamespace("user", "http://example.org/user/");
-        modelBuilder.setNamespace("status", "http://example.org/status/");
-        modelBuilder.setNamespace("hashtag", "http://example.org/hashtag/");
+        final String namespaceBase = "http://emme.mobi.ch/twitter/";
+        modelBuilder.setNamespace("tw", namespaceBase);
+        modelBuilder.setNamespace("user", namespaceBase + "user/");
+        modelBuilder.setNamespace("tweet", namespaceBase + "tweet/");
+        modelBuilder.setNamespace("hashtag", namespaceBase + "hashtag/");
 
-        final Struct user = status.getStruct("User");
-        final String statusIri = "status:" + status.getInt64("Id");
+
+        // hashtags
+        final List<Struct> hashtags = tweet.getArray("HashtagEntities");
+        if (hashtags != null) {
+            for (final Struct hashtag : hashtags) {
+                final String hashtagIri = "hashtag:" + hashtag.getString("Text");
+                modelBuilder.subject(hashtagIri);
+                add(modelBuilder, RDF_TYPE, "tw:Hashtag");
+                add(modelBuilder, RDF_LABEL, hashtag.getString("Text"));
+            }
+        }
+
+        // tweet
+        final String tweetIri = "tweet:" + tweet.getInt64("Id");
+        modelBuilder.subject(tweetIri);
+        add(modelBuilder, RDF_TYPE, "tw:Tweet");
+        add(modelBuilder, "tw:text", tweet.getString("Text"));
+        add(modelBuilder, "tw:timestamp", ((Date) tweet.get("CreatedAt")).getTime());
+        add(modelBuilder, "tw:source", tweet.getString("Source"));
+        final Struct geoLocation = tweet.getStruct("GeoLocation");
+        if (geoLocation != null) {
+            add(modelBuilder, "tw:latitude", geoLocation.getFloat64("Latitude"));
+            add(modelBuilder, "tw:longitude", geoLocation.getFloat64("Longitude"));
+        }
+        final List<Struct> mentions = tweet.getArray("UserMentionEntities");
+        if (mentions != null) {
+            for (final Struct mention : mentions) {
+                modelBuilder.add("tw:mention", "user:" + mention.getInt64("Id"));
+            }
+        }
+
+        // user
+        final Struct user = tweet.getStruct("User");
         final String userIri = "user:" + user.getInt64("Id");
-
-        // user info, user#status
-        modelBuilder.subject(userIri)
-                .add("rdf:type", "ex:User")
-                .add("rdf:label", user.getString("Name"))
-                .add("ex:name", user.getString("Name"))
-                .add("ex:tweet", statusIri);
-
-        // status
-        modelBuilder.subject(statusIri).add("rdf:type", "ex:Tweet").add("ex:text", status.getString("Text"));
+        modelBuilder.subject(userIri);
+        add(modelBuilder, RDF_TYPE, "tw:User");
+        add(modelBuilder, RDF_LABEL, user.getString("Name"));
+        add(modelBuilder, "tw:name", user.getString("Name"));
+        add(modelBuilder, "tw:screenname", user.getString("ScreenName"));
+        add(modelBuilder, "tw:followerscount", user.getInt32("FollowersCount"));
+        add(modelBuilder, "tw:location", user.getString("Location"));
+        add(modelBuilder, "tw:tweet", tweetIri);
 
         return modelBuilder.build();
+    }
+
+    private static void add(final ModelBuilder builder, final String predicate, final Object value) {
+        if (value != null) {
+            builder.add(predicate, value);
+        }
     }
 
 }
