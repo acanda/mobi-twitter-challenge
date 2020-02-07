@@ -1,0 +1,18 @@
+BASE <http://example.org/hashtag/>
+PREFIX ex: <http://example.org/>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+
+construct where {
+    ?user a ex:User .
+    ?user ?p ?o .
+    ?user ex:tweet ?tweet .
+    
+    ?tweet ex:hashtag ?ht .
+    ?tweet ?p2 ?o2 .
+    
+    VALUES ?ht {
+    	<NCT>
+	}
+    ?ht a ex:Hashtag .
+    ?ht ?p3 ?o3 .
+}

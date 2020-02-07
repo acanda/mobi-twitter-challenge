@@ -1,0 +1,5 @@
+PREFIX ex: <http://example.org/>
+
+select (COUNT(?s) AS ?count) where { 
+	?s a ex:Tweet .
+} limit 100 

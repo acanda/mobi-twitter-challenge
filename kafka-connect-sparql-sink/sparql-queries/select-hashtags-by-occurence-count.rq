@@ -1,0 +1,9 @@
+BASE <http://example.org/hashtag/>
+PREFIX ex: <http://example.org/>
+
+select ?ht (COUNT(?tweet) AS ?tweetCount) where {
+    ?tweet ex:hashtag ?ht .
+    ?ht a ex:Hashtag .
+} GROUP BY ?ht
+ORDER BY DESC(?tweetCount)
+limit 100
