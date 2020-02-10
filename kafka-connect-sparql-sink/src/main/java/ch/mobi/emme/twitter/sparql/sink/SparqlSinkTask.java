@@ -13,6 +13,7 @@ import org.apache.kafka.connect.sink.SinkTask;
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.util.ModelBuilder;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
+import org.eclipse.rdf4j.model.vocabulary.RDFS;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.sparql.SPARQLRepository;
 
@@ -23,7 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 public class SparqlSinkTask extends SinkTask {
 
     private static final String RDF_TYPE = "rdf:type";
-    private static final String RDF_LABEL = "rdf:label";
+    private static final String RDFS_LABEL = "rdfs:label";
 
     private RepositoryConnection connection;
     private SPARQLRepository repo;
@@ -74,6 +75,7 @@ public class SparqlSinkTask extends SinkTask {
         final ModelBuilder modelBuilder = new ModelBuilder();
 
         modelBuilder.setNamespace(RDF.NS);
+        modelBuilder.setNamespace(RDFS.NS);
         final String namespaceBase = "http://emme.mobi.ch/twitter/";
         modelBuilder.setNamespace("tw", namespaceBase);
         modelBuilder.setNamespace("user", namespaceBase + "user/");
@@ -88,7 +90,7 @@ public class SparqlSinkTask extends SinkTask {
                 final String hashtagIri = "hashtag:" + hashtag.getString("Text");
                 modelBuilder.subject(hashtagIri);
                 add(modelBuilder, RDF_TYPE, "tw:Hashtag");
-                add(modelBuilder, RDF_LABEL, hashtag.getString("Text"));
+                add(modelBuilder, RDFS_LABEL, hashtag.getString("Text"));
             }
         }
 
@@ -96,7 +98,9 @@ public class SparqlSinkTask extends SinkTask {
         final String tweetIri = "tweet:" + tweet.getInt64("Id");
         modelBuilder.subject(tweetIri);
         add(modelBuilder, RDF_TYPE, "tw:Tweet");
-        add(modelBuilder, "tw:text", tweet.getString("Text"));
+        final String text = tweet.getString("Text");
+        add(modelBuilder, RDFS_LABEL, text.substring(0, Math.min(text.length(), 5)) + "\u2026");
+        add(modelBuilder, "tw:text", text);
         add(modelBuilder, "tw:timestamp", ((Date) tweet.get("CreatedAt")).getTime());
         add(modelBuilder, "tw:source", tweet.getString("Source"));
         final Struct geoLocation = tweet.getStruct("GeoLocation");
@@ -116,7 +120,7 @@ public class SparqlSinkTask extends SinkTask {
         final String userIri = "user:" + user.getInt64("Id");
         modelBuilder.subject(userIri);
         add(modelBuilder, RDF_TYPE, "tw:User");
-        add(modelBuilder, RDF_LABEL, user.getString("Name"));
+        add(modelBuilder, RDFS_LABEL, user.getString("Name"));
         add(modelBuilder, "tw:name", user.getString("Name"));
         add(modelBuilder, "tw:screenname", user.getString("ScreenName"));
         add(modelBuilder, "tw:followerscount", user.getInt32("FollowersCount"));
